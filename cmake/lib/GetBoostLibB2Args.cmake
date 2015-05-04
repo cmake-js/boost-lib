@@ -5,8 +5,13 @@ function(get_boots_lib_b2_args)
                --build-dir=Build
                stage
                -d+2
-               --hash
-               PARENT_SCOPE)
+               --hash)
+
+    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+        list(APPEND b2Args "variant=debug")
+    else()
+        list(APPEND b2Args "variant=release")
+    endif()
 
     if(CMAKE_BUILD_TYPE STREQUAL "ReleaseNoInline")
       list(APPEND b2Args "cxxflags=${RELEASENOINLINE_FLAGS}")
@@ -29,12 +34,11 @@ function(get_boots_lib_b2_args)
                   define=_BIND_TO_CURRENT_CRT_VERSION=1
                   --layout=versioned
                   )
-      # TODO: this is not working, detect x64 properly! (from toolset ending)
-      if(TargetArchitecture STREQUAL "x86_64")
+      if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
         list(APPEND b2Args address-model=64)
       endif()
     elseif(APPLE)
-      list(APPEND b2Args variant=release toolset=clang cxxflags=-fPIC cxxflags=-std=c++11 cxxflags=-stdlib=libc++
+      list(APPEND b2Args toolset=clang cxxflags=-fPIC cxxflags=-std=c++11 cxxflags=-stdlib=libc++
                          linkflags=-stdlib=libc++ architecture=combined address-model=32_64 --layout=tagged)
     elseif(UNIX)
       list(APPEND b2Args --layout=tagged -sNO_BZIP2=1)
@@ -42,7 +46,7 @@ function(get_boots_lib_b2_args)
         configure_file("${CMAKE_SOURCE_DIR}/tools/android/user-config.jam.in" "${BoostSourceDir}/tools/build/src/user-config.jam")
         list(APPEND b2Args toolset=gcc-android target-os=linux)
       else()
-        list(APPEND b2Args variant=release cxxflags=-fPIC cxxflags=-std=c++11)
+        list(APPEND b2Args cxxflags=-fPIC cxxflags=-std=c++11)
         # Need to configure the toolset based on whatever version CMAKE_CXX_COMPILER is
         string(REGEX MATCH "[0-9]+\\.[0-9]+" ToolsetVer "${CMAKE_CXX_COMPILER_VERSION}")
         if(CMAKE_CXX_COMPILER_ID MATCHES "^(Apple)?Clang$")
@@ -55,4 +59,6 @@ function(get_boots_lib_b2_args)
         endif()
       endif()
     endif()
+
+    set(b2Args "${b2Args}" PARENT_SCOPE)
 endfunction(get_boots_lib_b2_args)
