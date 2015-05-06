@@ -1,8 +1,12 @@
 function(get_boots_lib_b2_args)
-    if(CMAKE_CL_64 EQUAL 1)
-        set(stage_dir stage64)
+    if(MSVC)
+        if(CMAKE_CL_64 EQUAL 1)
+            set(stage_dir stage64)
+        else()
+            set(stage_dir stage32)
+        endif()
     else()
-        set(stage_dir stage32)
+        set(stage_dir stage)
     endif()
         
     set(b2Args link=static
@@ -15,9 +19,9 @@ function(get_boots_lib_b2_args)
                --hash)
                
     message(STATUS "Generating b2 args.")
-
+    
     if(NOT MSVC)
-        if((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (NOT DEFINED CMAKE_BUILD_TYPE))
+        if((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (CMAKE_BUILD_TYPE STREQUAL "") OR (NOT DEFINED CMAKE_BUILD_TYPE))
             message(STATUS "\tvariant=debug")
             list(APPEND b2Args "variant=debug")
         else()

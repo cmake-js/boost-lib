@@ -34,8 +34,8 @@ function(boost_lib_installer req_boost_version req_boost_libs)
         set(b2_command b2.exe)
         file(TO_CMAKE_PATH "${install_dir}/b2.exe" b2_path)
     else(WIN32)
-        set(bootstrap sh bootstrap.sh)
-        set(b2_command b2)
+        set(bootstrap ./bootstrap.sh)
+        set(b2_command ./b2)
         file(TO_CMAKE_PATH "${install_dir}/b2" b2_path)
     endif(WIN32)
     if (NOT EXISTS "${b2_path}")
@@ -54,10 +54,14 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     endif()
 
     # Process libs
-    if(CMAKE_CL_64 EQUAL 1)
-        set(stage_dir stage64)
+    if(MSVC)
+        if(CMAKE_CL_64 EQUAL 1)
+            set(stage_dir stage64)
+        else()
+            set(stage_dir stage32)
+        endif()
     else()
-        set(stage_dir stage32)
+        set(stage_dir stage)
     endif()
     
     get_boots_lib_b2_args()
@@ -117,9 +121,15 @@ function(boost_lib_installer req_boost_version req_boost_libs)
                     IMPORTED_LOCATION "${install_dir}/${stage_dir}/lib/libboost_${ComponentLibName}-${CompilerName}-mt-${lib_postfix}.lib"
                     LINKER_LANGUAGE CXX)
             else()
-                set_target_properties(${boost_lib} PROPERTIES
-                    IMPORTED_LOCATION "${install_dir}/${stage_dir}/lib/libboost_${ComponentLibName}-mt.a"
-                    LINKER_LANGUAGE CXX)
+                if((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (CMAKE_BUILD_TYPE STREQUAL "") OR (NOT DEFINED CMAKE_BUILD_TYPE))
+                    set_target_properties(${boost_lib} PROPERTIES
+                        IMPORTED_LOCATION "${install_dir}/${stage_dir}/lib/libboost_${ComponentLibName}-mt-d.a"
+                        LINKER_LANGUAGE CXX)
+                else()
+                    set_target_properties(${boost_lib} PROPERTIES
+                        IMPORTED_LOCATION "${install_dir}/${stage_dir}/lib/libboost_${ComponentLibName}-mt.a"
+                        LINKER_LANGUAGE CXX)
+                endif()
             endif()
 
             set_target_properties(${jam_lib} ${boost_lib} PROPERTIES

@@ -8,6 +8,10 @@ if(CMAKE_CL_64 EQUAL 0)
     SET(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /SAFESEH:NO")
 endif()
 
+if(UNIX)
+    SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+endif()
+
 require_boost_libs(1.58.0 "coroutine;optional")
 
 include_directories(${Boost_INCLUDE_DIRS})
