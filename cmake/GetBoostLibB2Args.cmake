@@ -1,17 +1,30 @@
 function(get_boots_lib_b2_args)
+    if(CMAKE_CL_64 EQUAL 1)
+        set(stage_dir stage64)
+    else()
+        set(stage_dir stage32)
+    endif()
+        
     set(b2Args link=static
                threading=multi
                runtime-link=shared
                --build-dir=Build
                stage
+               --stagedir=${stage_dir}
                -d+2
                --hash)
+               
+    message(STATUS "Generating b2 args.")
 
-    if(CMAKE_BUILD_TYPE STREQUAL "Debug")
-        list(APPEND b2Args "variant=debug")
-    else()
-        list(APPEND b2Args "variant=release")
-    endif()
+    if(NOT MSVC)
+        if((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (NOT DEFINED CMAKE_BUILD_TYPE))
+            message(STATUS "\tvariant=debug")
+            list(APPEND b2Args "variant=debug")
+        else()
+            message(STATUS "\tvariant=release")
+            list(APPEND b2Args "variant=release")
+        endif()
+    endif(NOT MSVC)
 
     if(CMAKE_BUILD_TYPE STREQUAL "ReleaseNoInline")
         list(APPEND b2Args "cxxflags=${RELEASENOINLINE_FLAGS}")
@@ -35,8 +48,10 @@ function(get_boots_lib_b2_args)
                     define=_BIND_TO_CURRENT_CRT_VERSION=1
                     --layout=versioned)
                     
-        if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL "x86_64")
+        if(CMAKE_CL_64 EQUAL 1)
             list(APPEND b2Args address-model=64)
+        else()
+            list(APPEND b2Args address-model=32)
         endif()      
     elseif(APPLE)
         list(APPEND b2Args toolset=clang cxxflags=-fPIC cxxflags=-std=c++11 cxxflags=-stdlib=libc++

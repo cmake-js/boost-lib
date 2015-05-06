@@ -2,30 +2,34 @@
   "name": "boost-lib",
   "version": "0.8.0",
   "description": "Boost dependency manager for CMake.js based native modules",
+  "license": "MIT",
+  "keywords": [
+    "native",
+    "addon",
+    "module",
+    "c",
+    "c++",
+    "bindings",
+    "build",
+    "cmake",
+    "nw.js",
+    "boost"
+  ],
+  "author": "Gábor Mező aka unbornchikken",
   "repository": {
-    "license": "MIT",
-    "keywords": [
-      "native",
-      "addon",
-      "module",
-      "c",
-      "c++",
-      "bindings",
-      "build",
-      "cmake",
-      "nw.js",
-      "boost"
-    ],
-    "author": "G�bor Mez� aka unbornchikken",
-    "repository": {
-      "type": "git",
-      "url": "git://github.com/unbornchikken/boost-lib.git"
-    }
+    "type": "git",
+    "url": "git://github.com/unbornchikken/boost-lib.git"
+  },
+  "bin": "./bin/boost-lib",
+  "main": "./lib/index.js",
+  "engines": {
+    "node": ">= 0.10.0",
+    "iojs": ">= 1.0.0"
   },
   "dependencies": {
     "bluebird": "^2.9.15",
     "cli": "^0.6.5",
-    "cmake-js": "^0.10.0",
+    "cmake-js": "^0.10.1",
     "debug": "^2.1.3",
     "fs-extra": "^0.16.5",
     "lodash": "^3.6.0",

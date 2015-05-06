@@ -2,46 +2,9 @@ cmake_minimum_required(VERSION 2.8)
 
 include(ExternalProject)
 include(GetBoostLibB2Args)
-
-#boost_lib_checkout_submo("${install_dir}" libs/core)
-    #boost_lib_checkout_submo("${install_dir}" libs/detail)
-    #boost_lib_checkout_submo("${install_dir}" libs/config)
-    #boost_lib_checkout_submo("${install_dir}" libs/preprocessor)
-    #boost_lib_checkout_submo("${install_dir}" libs/mpl)
-    #boost_lib_checkout_submo("${install_dir}" libs/wave)
-    #boost_lib_checkout_submo("${install_dir}" libs/assert)
-    #boost_lib_checkout_submo("${install_dir}" libs/move)
-    #boost_lib_checkout_submo("${install_dir}" libs/static_assert)
-    #boost_lib_checkout_submo("${install_dir}" libs/range)
-    #boost_lib_checkout_submo("${install_dir}" libs/type_traits)
-    #boost_lib_checkout_submo("${install_dir}" libs/iterator)
-    #boost_lib_checkout_submo("${install_dir}" libs/concept_check)
-    #boost_lib_checkout_submo("${install_dir}" libs/utility)
-    #boost_lib_checkout_submo("${install_dir}" libs/throw_exception)
-    #boost_lib_checkout_submo("${install_dir}" libs/predef)
-    #boost_lib_checkout_submo("${install_dir}" libs/exception)
-    #boost_lib_checkout_submo("${install_dir}" libs/smart_ptr)
+include(DownloadBoost)
 
 # Known dependencies
-set(core_dep
-    config
-    detail
-    preprocessor
-    assert
-    move
-    static_assert
-    range
-    type_traits
-    iterator
-    concept_check
-    utility
-    throw_exception
-    predef
-    exception
-    smart_ptr
-    mpl
-    ratio
-    integer)
 set(chrono_dep system)
 set(coroutine_dep context system)
 set(context_dep chrono thread)
@@ -53,59 +16,17 @@ set(thread_dep chrono)
 set(timer_dep chrono)
 set(wave_dep chrono date_time filesystem thread)
 
-# Must build list
-# set(to_build_libs chrono context filesystem graph_parallel iostreams locale mpi
-
-function(boost_lib_checkout_submo install_dir submo_path)
-    file(GLOB submo_dir "${install_dir}/${submo_path}/*")
-    list(LENGTH submo_dir submo_dir_len)
-    if(submo_dir_len EQUAL 0)
-        message(STATUS "Checking out subodule: ${submo_path}")
-        execute_process(COMMAND "${GIT_EXECUTABLE}" submodule update --recursive --init "${submo_path}" WORKING_DIRECTORY ${install_dir} RESULT_VARIABLE err ERROR_VARIABLE err_msg)
-        if(err)
-            message(FATAL_ERROR "Git error:\n${err_msg}")
-        endif(err)
-    else()
-        message(STATUS "Submodule ${submo_path} is already checked out.")
-    endif()    
-endfunction(boost_lib_checkout_submo name)
-
 function(boost_lib_installer req_boost_version req_boost_libs)
     message(STATUS "Boost Lib Installer starting.")
 
-    # Resolving Git dependency
-    find_package(Git)
-    if(GIT_FOUND)
-        message(STATUS "Git found: ${GIT_EXECUTABLE}")
-    else(GIT_FOUND)
-        message(FATAL_ERROR "Git is required for Boost library installer.")
-    endif(GIT_FOUND)
-
-    # Install dir
-    if(WIN32)
-        set(install_dir $ENV{USERPROFILE})
-    else(WIN32)
-        set(install_dir $ENV{HOME})
-    endif(WIN32)
-    file(TO_NATIVE_PATH "${install_dir}/.cmake-js/boost/${req_boost_version}" install_dir)
-
-    message(STATUS "Boost Lib install dir: ${install_dir}")
-
-    # Clone
-    if(NOT EXISTS "${install_dir}/.git/")
-        message(STATUS "Cloning Boost, please stand by ...")
-        execute_process(COMMAND "${GIT_EXECUTABLE}" clone --branch boost-${req_boost_version} --single-branch --depth 1 https://github.com/boostorg/boost.git "${install_dir}" RESULT_VARIABLE err ERROR_VARIABLE err_msg)
-        if(err)
-            message(FATAL_ERROR "Git error:\n${err_msg}")
-        endif(err)
-    else()
-        message(STATUS "Boost repository exists.")
-    endif()
-
-    # Checkout Tools and Musthaves
-    boost_lib_checkout_submo("${install_dir}" tools/build)
-    boost_lib_checkout_submo("${install_dir}" tools/inspect)
-    boost_lib_checkout_submo("${install_dir}" libs/wave) # this is required for some unknown reason for jam
+    # Download
+    download_boost("${req_boost_version}")
+    get_filename_component(req_boost_version "${install_dir}" NAME)
+    message(STATUS "Boost path: ${install_dir}")
+    message(STATUS "Boost version: ${req_boost_version}")
+    string(REGEX MATCH "^([0-9]+)\\.([0-9]+)\\." m "${req_boost_version}")
+    set(lib_postfix "${CMAKE_MATCH_1}_${CMAKE_MATCH_2}")
+    message(STATUS "Boost library postfix: ${lib_postfix}")
 
     # Bootstrap
     if(WIN32)
@@ -118,8 +39,13 @@ function(boost_lib_installer req_boost_version req_boost_libs)
         file(TO_CMAKE_PATH "${install_dir}/b2" b2_path)
     endif(WIN32)
     if (NOT EXISTS "${b2_path}")
-        message(STATUS "Bootstrapping ...")
-        execute_process(COMMAND ${bootstrap} WORKING_DIRECTORY ${install_dir} RESULT_VARIABLE err OUTPUT_VARIABLE err_msg OUTPUT_QUIET)
+        message(STATUS "Invoking ${install_dir}/tools/build/${bootstrap}")
+        execute_process(COMMAND "${bootstrap}" WORKING_DIRECTORY "${install_dir}/tools/build" RESULT_VARIABLE err OUTPUT_VARIABLE err_msg OUTPUT_QUIET)
+        if(err)
+            message(FATAL_ERROR "Bootstrap error:\n${err_msg}")
+        endif(err)
+        message(STATUS "Invoking ${install_dir}/${bootstrap}")
+        execute_process(COMMAND "${bootstrap}" WORKING_DIRECTORY "${install_dir}" RESULT_VARIABLE err OUTPUT_VARIABLE err_msg OUTPUT_QUIET)
         if(err)
             message(FATAL_ERROR "Bootstrap error:\n${err_msg}")
         endif(err)
@@ -128,11 +54,16 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     endif()
 
     # Process libs
+    if(CMAKE_CL_64 EQUAL 1)
+        set(stage_dir stage64)
+    else()
+        set(stage_dir stage32)
+    endif()
+    
     get_boots_lib_b2_args()
     message(STATUS "b2 args: ${b2Args}")
 
     # Resolve dependency tree
-    list(APPEND req_boost_libs core) # core dependencies
     foreach(i RANGE 5)
         foreach(lib ${req_boost_libs})
             list(APPEND req_boost_libs2 ${lib})
@@ -145,9 +76,6 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     foreach(lib ${req_boost_libs})
         message(STATUS "Resolving Boost library: ${lib}")
 
-        # Init submodule
-        boost_lib_checkout_submo("${install_dir}" libs/${lib})
-
         if (EXISTS "${install_dir}/libs/${lib}/build/")
             # Has source
             set(jam_lib boost_${lib}_jam)
@@ -155,10 +83,10 @@ function(boost_lib_installer req_boost_version req_boost_libs)
 
             # Create lib
             ExternalProject_Add(
-                  ${jam_lib}
-                  STAMP_DIR ${CMAKE_BINARY_DIR}/boost-${req_boost_version}
-                  SOURCE_DIR ${install_dir}
-                  BINARY_DIR ${install_dir}
+                  "${jam_lib}"
+                  STAMP_DIR "${CMAKE_BINARY_DIR}/boost-${req_boost_version}"
+                  SOURCE_DIR "${install_dir}"
+                  BINARY_DIR "${install_dir}"
                   CONFIGURE_COMMAND ""
                   BUILD_COMMAND "${b2_command}" "${b2Args}" --with-${lib}
                   INSTALL_COMMAND ""
@@ -182,13 +110,12 @@ function(boost_lib_installer req_boost_version req_boost_libs)
                 endif()
 
                 set_target_properties(${boost_lib} PROPERTIES
-                    IMPORTED_LOCATION_DEBUG ${install_dir}/stage/lib/libboost_${ComponentLibName}-${CompilerName}-mt-gd-${req_boost_version}.lib
-                    IMPORTED_LOCATION ${install_dir}/stage/lib/libboost_${ComponentLibName}-${CompilerName}-mt-${req_boost_version}.lib
+                    IMPORTED_LOCATION_DEBUG "${install_dir}/${stage_dir}/lib/libboost_${ComponentLibName}-${CompilerName}-mt-gd-${lib_postfix}.lib"
+                    IMPORTED_LOCATION "${install_dir}/${stage_dir}/lib/libboost_${ComponentLibName}-${CompilerName}-mt-${lib_postfix}.lib"
                     LINKER_LANGUAGE CXX)
             else()
                 set_target_properties(${boost_lib} PROPERTIES
-                    IMPORTED_LOCATION_DEBUG ${install_dir}/stage/lib/libboost_${ComponentLibName}-mt-gd.a
-                    IMPORTED_LOCATION ${install_dir}/stage/lib/libboost_${ComponentLibName}-mt.a
+                    IMPORTED_LOCATION "${install_dir}/${stage_dir}/lib/libboost_${ComponentLibName}-mt.a"
                     LINKER_LANGUAGE CXX)
             endif()
 
