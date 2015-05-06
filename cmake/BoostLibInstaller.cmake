@@ -78,6 +78,9 @@ function(boost_lib_installer req_boost_version req_boost_libs)
 
         if (EXISTS "${install_dir}/libs/${lib}/build/")
             # Has source
+            
+            # TODO: Command has to be a dummy if the library file is already exists!
+            
             set(jam_lib boost_${lib}_jam)
             set(boost_lib boost_${lib})
 
@@ -142,6 +145,7 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     endif()
 
     # b2 headers
+    # TODO: Generate only if doesn't exists
     message(STATUS "Generating headers ...")
     execute_process(COMMAND ${b2_command} headers WORKING_DIRECTORY ${install_dir} RESULT_VARIABLE err OUTPUT_VARIABLE err_msg)
     if(err)
