@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.2)
+
 function(download_boost version)
     find_file(cwd DownloadBoost.cmake PATHS ${CMAKE_MODULE_PATH})
     get_filename_component(cwd "${cwd}" DIRECTORY)

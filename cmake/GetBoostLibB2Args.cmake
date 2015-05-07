@@ -1,3 +1,5 @@
+cmake_minimum_required(VERSION 3.2)
+
 function(get_boots_lib_b2_args)
     if(MSVC)
         if(CMAKE_CL_64 EQUAL 1)

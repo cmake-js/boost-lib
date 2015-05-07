@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 3.2)
 
 include(ExternalProject)
 include(GetBoostLibB2Args)
@@ -123,6 +123,7 @@ function(boost_lib_installer req_boost_version req_boost_libs)
                     CONFIGURE_COMMAND ""
                     BUILD_COMMAND ""
                     INSTALL_COMMAND ""
+                    BUILD_BYPRODUCTS "${lib_path}"
                     LOG_BUILD OFF)
             else()
                 message(STATUS "Setting up external project to build ${lib}.")
@@ -134,6 +135,7 @@ function(boost_lib_installer req_boost_version req_boost_libs)
                     CONFIGURE_COMMAND ""
                     BUILD_COMMAND "${b2_command}" "${b2Args}" --with-${lib}
                     INSTALL_COMMAND ""
+                    BUILD_BYPRODUCTS "${lib_path}"
                     LOG_BUILD ON)
             endif()            
 
