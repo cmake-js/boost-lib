@@ -7,7 +7,7 @@ include(DownloadBoost)
 # Known dependencies
 set(chrono_dep system)
 set(coroutine_dep context system)
-set(context_dep chrono thread)
+set(context_dep thread)
 set(filesystem_dep system)
 set(graph_dep regex)
 set(locale_dep system)
@@ -68,7 +68,7 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     message(STATUS "b2 args: ${b2Args}")
 
     # Resolve dependency tree
-    foreach(i RANGE 3)
+    foreach(i RANGE 4)
         foreach(lib ${req_boost_libs})
             list(APPEND req_boost_libs2 ${lib})
             list(APPEND req_boost_libs2 ${${lib}_dep})
