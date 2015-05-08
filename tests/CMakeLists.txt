@@ -12,7 +12,7 @@ if(UNIX)
     SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
-require_boost_libs(1.58.0 "coroutine;optional")
+require_boost_libs(1.58.0 coroutine;optional)
 
 include_directories(${Boost_INCLUDE_DIRS})
 file(GLOB src "main.cpp")

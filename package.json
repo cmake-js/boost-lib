@@ -1,6 +1,6 @@
 {
   "name": "boost-lib",
-  "version": "0.9.0",
+  "version": "0.9.1",
   "description": "Boost dependency manager for CMake.js based native modules",
   "license": "MIT",
   "keywords": [

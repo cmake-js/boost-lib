@@ -54,119 +54,121 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     endif()
 
     # Process libs
-    if(MSVC)
-        if(CMAKE_CL_64 EQUAL 1)
-            set(stage_dir stage64)
+    if(req_boost_libs)
+        if(MSVC)
+            if(CMAKE_CL_64 EQUAL 1)
+                set(stage_dir stage64)
+            else()
+                set(stage_dir stage32)
+            endif()
         else()
-            set(stage_dir stage32)
+            set(stage_dir stage)
         endif()
-    else()
-        set(stage_dir stage)
-    endif()
-    
-    get_boots_lib_b2_args()
-    message(STATUS "b2 args: ${b2Args}")
 
-    # Resolve dependency tree
-    foreach(i RANGE 4)
-        foreach(lib ${req_boost_libs})
-            list(APPEND req_boost_libs2 ${lib})
-            list(APPEND req_boost_libs2 ${${lib}_dep})
-        endforeach()
-        list(REMOVE_DUPLICATES req_boost_libs2)
-        set(req_boost_libs "${req_boost_libs2}")
-    endforeach()
+        get_boots_lib_b2_args()
+        message(STATUS "b2 args: ${b2Args}")
 
-    foreach(lib ${req_boost_libs})
-        message(STATUS "Resolving Boost library: ${lib}")
-
-        if (EXISTS "${install_dir}/libs/${lib}/build/")
-            # Has source
-            
-            # Setup variables
-            set(jam_lib boost_${lib}_jam)
-            set(boost_lib boost_${lib})
-            if(lib STREQUAL "test")
-                set(lib_name unit_test_framework)
-            else()
-                set(lib_name ${lib})
-            endif()
-            
-            if(MSVC)
-                if(MSVC11)
-                    set(compiler_name vc110)
-                elseif(MSVC12)
-                    set(compiler_name vc120)
-                elseif(MSVC14)
-                    set(compiler_name vc140)
-                endif()
-                
-                set(debug_lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-${compiler_name}-mt-gd-${lib_postfix}.lib")
-                set(lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-${compiler_name}-mt-${lib_postfix}.lib")
-            else()
-                if((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (CMAKE_BUILD_TYPE STREQUAL "") OR (NOT DEFINED CMAKE_BUILD_TYPE))
-                    set(lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-mt-d.a")
-                else()
-                    set(lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-mt.a")
-                endif()
-            endif()
-
-            # Create lib
-            if(EXISTS ${lib_path})
-                message(STATUS "Library ${lib} already built.")
-                # Dummy project:
-                ExternalProject_Add(
-                    "${jam_lib}"
-                    STAMP_DIR "${CMAKE_BINARY_DIR}/boost-${req_boost_version}"
-                    SOURCE_DIR "${install_dir}"
-                    BINARY_DIR "${install_dir}"
-                    CONFIGURE_COMMAND ""
-                    BUILD_COMMAND ""
-                    INSTALL_COMMAND ""
-                    BUILD_BYPRODUCTS "${lib_path}"
-                    LOG_BUILD OFF)
-            else()
-                message(STATUS "Setting up external project to build ${lib}.")
-                ExternalProject_Add(
-                    "${jam_lib}"
-                    STAMP_DIR "${CMAKE_BINARY_DIR}/boost-${req_boost_version}"
-                    SOURCE_DIR "${install_dir}"
-                    BINARY_DIR "${install_dir}"
-                    CONFIGURE_COMMAND ""
-                    BUILD_COMMAND "${b2_command}" "${b2Args}" --with-${lib}
-                    INSTALL_COMMAND ""
-                    BUILD_BYPRODUCTS "${lib_path}"
-                    LOG_BUILD ON)
-            endif()            
-
-            add_library(${boost_lib} STATIC IMPORTED GLOBAL)            
-
-            if(MSVC)
-                set_target_properties(${boost_lib} PROPERTIES
-                    IMPORTED_LOCATION_DEBUG "${debug_lib_path}"
-                    IMPORTED_LOCATION "${lib_path}"
-                    LINKER_LANGUAGE CXX)
-            else()
-                set_target_properties(${boost_lib} PROPERTIES
-                    IMPORTED_LOCATION "${lib_path}"
-                    LINKER_LANGUAGE CXX)
-            endif()
-
-            # Exlude it from all
-            set_target_properties(${jam_lib} ${boost_lib} PROPERTIES LABELS Boost EXCLUDE_FROM_ALL TRUE)
-
-            # Setup dependencies
-            add_dependencies(${boost_lib} ${jam_lib})
-            foreach(dep_lib ${${lib}_dep})
-                message(STATUS "Setting ${boost_lib} dependent on boost_${dep_lib}")
-                add_dependencies(${boost_lib} boost_${dep_lib})
+        # Resolve dependency tree
+        foreach(i RANGE 4)
+            foreach(lib ${req_boost_libs})
+                list(APPEND req_boost_libs2 ${lib})
+                list(APPEND req_boost_libs2 ${${lib}_dep})
             endforeach()
+            list(REMOVE_DUPLICATES req_boost_libs2)
+            set(req_boost_libs "${req_boost_libs2}")
+        endforeach()
 
-            list(APPEND boost_libs ${boost_lib})
+        foreach(lib ${req_boost_libs})
+            message(STATUS "Resolving Boost library: ${lib}")
 
-        endif()
+            if (EXISTS "${install_dir}/libs/${lib}/build/")
+                # Has source
 
-    endforeach()
+                # Setup variables
+                set(jam_lib boost_${lib}_jam)
+                set(boost_lib boost_${lib})
+                if(lib STREQUAL "test")
+                    set(lib_name unit_test_framework)
+                else()
+                    set(lib_name ${lib})
+                endif()
+
+                if(MSVC)
+                    if(MSVC11)
+                        set(compiler_name vc110)
+                    elseif(MSVC12)
+                        set(compiler_name vc120)
+                    elseif(MSVC14)
+                        set(compiler_name vc140)
+                    endif()
+
+                    set(debug_lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-${compiler_name}-mt-gd-${lib_postfix}.lib")
+                    set(lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-${compiler_name}-mt-${lib_postfix}.lib")
+                else()
+                    if((CMAKE_BUILD_TYPE STREQUAL "Debug") OR (CMAKE_BUILD_TYPE STREQUAL "") OR (NOT DEFINED CMAKE_BUILD_TYPE))
+                        set(lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-mt-d.a")
+                    else()
+                        set(lib_path "${install_dir}/${stage_dir}/lib/libboost_${lib_name}-mt.a")
+                    endif()
+                endif()
+
+                # Create lib
+                if(EXISTS ${lib_path})
+                    message(STATUS "Library ${lib} already built.")
+                    # Dummy project:
+                    ExternalProject_Add(
+                        "${jam_lib}"
+                        STAMP_DIR "${CMAKE_BINARY_DIR}/boost-${req_boost_version}"
+                        SOURCE_DIR "${install_dir}"
+                        BINARY_DIR "${install_dir}"
+                        CONFIGURE_COMMAND ""
+                        BUILD_COMMAND ""
+                        INSTALL_COMMAND ""
+                        BUILD_BYPRODUCTS "${lib_path}"
+                        LOG_BUILD OFF)
+                else()
+                    message(STATUS "Setting up external project to build ${lib}.")
+                    ExternalProject_Add(
+                        "${jam_lib}"
+                        STAMP_DIR "${CMAKE_BINARY_DIR}/boost-${req_boost_version}"
+                        SOURCE_DIR "${install_dir}"
+                        BINARY_DIR "${install_dir}"
+                        CONFIGURE_COMMAND ""
+                        BUILD_COMMAND "${b2_command}" "${b2Args}" --with-${lib}
+                        INSTALL_COMMAND ""
+                        BUILD_BYPRODUCTS "${lib_path}"
+                        LOG_BUILD ON)
+                endif()
+
+                add_library(${boost_lib} STATIC IMPORTED GLOBAL)
+
+                if(MSVC)
+                    set_target_properties(${boost_lib} PROPERTIES
+                        IMPORTED_LOCATION_DEBUG "${debug_lib_path}"
+                        IMPORTED_LOCATION "${lib_path}"
+                        LINKER_LANGUAGE CXX)
+                else()
+                    set_target_properties(${boost_lib} PROPERTIES
+                        IMPORTED_LOCATION "${lib_path}"
+                        LINKER_LANGUAGE CXX)
+                endif()
+
+                # Exlude it from all
+                set_target_properties(${jam_lib} ${boost_lib} PROPERTIES LABELS Boost EXCLUDE_FROM_ALL TRUE)
+
+                # Setup dependencies
+                add_dependencies(${boost_lib} ${jam_lib})
+                foreach(dep_lib ${${lib}_dep})
+                    message(STATUS "Setting ${boost_lib} dependent on boost_${dep_lib}")
+                    add_dependencies(${boost_lib} boost_${dep_lib})
+                endforeach()
+
+                list(APPEND boost_libs ${boost_lib})
+
+            endif()
+
+        endforeach()
+    endif(req_boost_libs)
 
     if(boost_libs)
         message(STATUS "Boost libs scheduled for build: ${boost_libs}")
