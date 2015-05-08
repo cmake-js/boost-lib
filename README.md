@@ -81,13 +81,13 @@ Their internal dependencies are handled automatically. So if you're requireing c
 
 ## 3. Use
 
-After Boost's include path should be regitered by entering:
+Boost's include path should be registered by entering:
 
 ```cmake
 include_directories(${Boost_INCLUDE_DIRS})
 ```
 
-And you have to link your addon aggainst Boost libraries:
+And you have to link your addon with Boost libraries:
 
 ```cmake
 target_link_libraries(${PROJECT_NAME} ${CMAKE_JS_LIB};${Boost_LIBRARIES})
