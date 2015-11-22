@@ -1,6 +1,6 @@
 {
   "name": "boost-lib",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "description": "Boost dependency manager for CMake.js based native modules",
   "license": "MIT",
   "keywords": [
@@ -28,7 +28,6 @@
   },
   "dependencies": {
     "bluebird": "*",
-    "cmake-js": "2",
     "debug": "*",
     "fs-extra": "0",
     "lodash": "*",
@@ -39,5 +38,8 @@
     "tar": "1",
     "url-join": "0",
     "yargs": "3"
+  },
+  "peerDependencies": {
+    "cmake-js": "^3.0.0"
   }
 }
