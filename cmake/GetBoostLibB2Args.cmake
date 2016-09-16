@@ -18,7 +18,8 @@ function(get_boots_lib_b2_args)
                stage
                --stagedir=${stage_dir}
                -d+2
-               --hash)
+               --hash
+               --ignore-site-config)
                
     message(STATUS "Generating b2 args.")
     
