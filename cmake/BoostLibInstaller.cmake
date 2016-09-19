@@ -180,7 +180,7 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     # b2 headers
     if(NOT EXISTS ${install_dir}/boost/)
         message(STATUS "Generating headers ...")
-        execute_process(COMMAND ${b2_command} headers WORKING_DIRECTORY ${install_dir} RESULT_VARIABLE err OUTPUT_VARIABLE err_msg)
+        execute_process(COMMAND ${b2_command} --ignore-site-config headers WORKING_DIRECTORY ${install_dir} RESULT_VARIABLE err OUTPUT_VARIABLE err_msg)
         if(err)
             message(FATAL_ERROR "b2 error:\n${err_msg}")
         endif(err)
