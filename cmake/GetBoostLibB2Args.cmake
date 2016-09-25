@@ -85,5 +85,9 @@ function(get_boots_lib_b2_args)
         endif()
     endif()
 
+    if(APPLE)
+        list(APPEND b2Args "-mmacosx-version-min=10.7")
+    endif()
+
     set(b2Args "${b2Args}" PARENT_SCOPE)
 endfunction(get_boots_lib_b2_args)
