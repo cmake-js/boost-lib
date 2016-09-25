@@ -61,7 +61,7 @@ function(get_boots_lib_b2_args)
             list(APPEND b2Args address-model=32)
         endif()      
     elseif(APPLE)
-        list(APPEND b2Args toolset=clang cxxflags=-fPIC cxxflags=-std=c++11 cxxflags=-stdlib=libc++ -mmacosx-version-min=10.7
+        list(APPEND b2Args toolset=clang cxxflags=-fPIC cxxflags=-std=c++11 cxxflags=-stdlib=libc++ cxxflags=-mmacosx-version-min=10.7
                          linkflags=-stdlib=libc++ architecture=combined address-model=32_64 --layout=tagged)
     elseif(UNIX)
         list(APPEND b2Args --layout=tagged -sNO_BZIP2=1)
