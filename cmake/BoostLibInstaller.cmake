@@ -173,8 +173,10 @@ function(boost_lib_installer req_boost_version req_boost_libs)
     if(boost_libs)
         message(STATUS "Boost libs scheduled for build: ${boost_libs}")
         set(Boost_LIBRARIES "${boost_libs}" PARENT_SCOPE)
+        set(Boost_LIBRARY_DIR "${install_dir}/${stage_dir}/lib/" CACHE STRING "" FORCE)
     else()
         set(Boost_LIBRARIES "" PARENT_SCOPE)
+        set(Boost_LIBRARY_DIR "" CACHE STRING "" FORCE)
     endif()
 
     # b2 headers
@@ -188,6 +190,7 @@ function(boost_lib_installer req_boost_version req_boost_libs)
         message(STATUS "Headers found.")
     endif()
 
+    set(Boost_INCLUDE_DIR "${install_dir}" CACHE STRING "" FORCE)
     set(Boost_INCLUDE_DIRS "${install_dir}" PARENT_SCOPE)
     set(Boost_FOUND TRUE PARENT_SCOPE)
 
